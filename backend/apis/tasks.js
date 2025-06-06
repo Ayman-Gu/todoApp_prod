@@ -9,11 +9,23 @@ router.post('/tasks/addTask', (req, res) => {
     db.query(
         "INSERT INTO tasks (title, creation_date, validation_date, description, completed) VALUES (?, ?, ?, ?, ?)",
         [title, creation_date, validation_date, description, completed],
-        (err) => {
+        (err,result) => {
             if (err) {
                 console.log(err);
                 return res.status(500).send(err);
             }
+               const newTask = {
+              id: result.insertId, // get the newly inserted ID
+              title,
+              creation_date,
+              validation_date,
+              description,
+              completed,
+            };
+
+            // Emit new task to all connected clients
+            req.io.emit('task:added', newTask);
+
             res.status(200).send({ message: 'added successfully' });
         }
     );
@@ -66,5 +78,59 @@ router.put('/tasks/updateDescription/:id', (req, res) => {
     }
   );
 });
+//delete Task
 
+router.delete("/tasks/deleteTask/:id", async (req, res) => {
+  const taskId = req.params.id;
+
+  const sql = "DELETE FROM tasks WHERE id = ?";
+  
+  db.query(sql, [taskId], (err, result) => {
+    if (err) {
+      console.error("Delete error:", err);
+      return res.status(500).json({ message: "Server error" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    res.json({ message: "Task deleted successfully" });
+  });
+});
+
+router.put('/tasks/updateTask/:id', (req, res) => {
+  const taskId = req.params.id;
+  const { title, description } = req.body;
+
+  db.query(
+    "UPDATE tasks SET title = ?, description = ? WHERE id = ?",
+    [title, description, taskId],
+    (err, results) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send(err);
+      }
+      if (results.affectedRows === 0) {
+        return res.status(404).send({ message: "Task not found" });
+      }
+
+      // Fetch the updated task details to emit full info
+      db.query("SELECT * FROM tasks WHERE id = ?", [taskId], (err2, updatedResults) => {
+        if (err2) {
+          console.error(err2);
+          return res.status(500).send(err2);
+        }
+        if (updatedResults.length === 0) {
+          return res.status(404).send({ message: "Task not found after update" });
+        }
+
+        // Emit updated task to all connected clients
+        req.io.emit('task:updated', updatedResults[0]);
+
+        res.status(200).send({ message: "Task updated successfully", task: updatedResults[0] });
+      });
+    }
+  );
+});
 module.exports = router;

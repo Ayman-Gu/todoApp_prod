@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, Routes, Route } from "react-router-dom";
-import Home from "../components/Home.jsx";
-import Profile from "../components/Profile.jsx";
 import TaskCard from "../components/taskCard.jsx";
+import { useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
+import { io } from "socket.io-client";
+
 
 export default function Layout() {
   const [task, setTask] = useState("");
+  const [allTasks, setAllTasks] = useState([]);
   const [listtasks, setListTasks] = useState([]);
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && task.trim() !== "") {
@@ -15,7 +18,35 @@ export default function Layout() {
     }
   };
 
-  const onAddTask = async (newTask) => {
+   useEffect(() => {
+    const socket = io("http://localhost:5000");
+
+    socket.on("task:added", (newTask) => {
+      setAllTasks((prev) => {
+        // Avoid duplicates by id
+        if (prev.some((t) => t.id === newTask.id)) return prev;
+        const updatedTasks = [...prev, newTask];
+        return updatedTasks;
+      });
+
+      setListTasks((prev) => {
+        // Add only if incomplete (completed === 0)
+        if (newTask.completed === 0) {
+          return [...prev, newTask].sort(
+            (a, b) => new Date(a.creation_date) - new Date(b.creation_date)
+          );
+        }
+        return prev;
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+
+ const onAddTask = async (newTask) => {
   try {
     const now = new Date().toISOString();
     const taskData = {
@@ -37,36 +68,45 @@ export default function Layout() {
     if (!response.ok) {
       throw new Error("Failed to add task");
     }
-    setListTasks(prevTasks => [...prevTasks, taskData]);
 
   } catch (error) {
     console.error("Error adding task:", error);
   }
-};
+  };
+
 
  useEffect(() => {
-    // Fetch tasks from backend
     const fetchTasks = async () => {
       try {
         const response = await fetch("http://localhost:5000/api/tasks/getTask");
-        if (!response.ok) throw new Error("Failed to fetc");
+        if (!response.ok) throw new Error("Failed to fetch tasks");
         const data = await response.json();
-      // Sort by creation_date ascending
-      const sortedTasks = data.sort(
-        (a, b) => new Date(a.creation_date) - new Date(b.creation_date)
-      );
 
-      setListTasks(sortedTasks);      } catch (error) {
+        setAllTasks(data);
+
+        const incompleteTasks = data.filter((task) => task.completed === 0);
+
+        const sortedTasks = incompleteTasks.sort(
+          (a, b) => new Date(a.creation_date) - new Date(b.creation_date)
+        );
+
+        setListTasks(sortedTasks);
+      } catch (error) {
         console.error("Error fetching tasks:", error);
       }
     };
-
     fetchTasks();
   }, []);
 
+
+  const location = useLocation();
+  const isHistorique = location.pathname === "/historique";
+  const isProfile = location.pathname === "/profile";
+
+
   return (
     <>
-      <div className="flex h-100vh bg-[#DDDDDD]">
+      <div className="flex h-100vh bg-[#ccd5ae]">
         {/* Sidebar */}
         <div className="group fixed inset-y-0 left-0 z-30 w-[60px] hover:w-[200px] transition-all duration-300 bg-black shadow-xl overflow-hidden">
           <nav className="flex flex-col items-start mt-10 space-y-4 px-2 text-white">
@@ -75,7 +115,7 @@ export default function Layout() {
               to="/"
               className={({ isActive }) =>
                 `flex items-center w-full px-3 py-2 rounded-md space-x-4 transition-all duration-300 
-                ${isActive ? "bg-cyan-700" : "hover:bg-cyan-600"}`
+                ${isActive ? "bg-[#8da9c4]" : "hover:bg-[#8da9c4]"}`
               }
             >
               <i className="fas fa-home min-w-[24px] text-white" />
@@ -97,6 +137,20 @@ export default function Layout() {
                 Profile
               </span>
             </NavLink>
+
+             {/* History */}
+            <NavLink
+              to="/historique"
+              className={({ isActive }) =>
+                `flex items-center w-full px-3 py-2 rounded-md space-x-4 transition-all duration-300 
+                ${isActive ? "bg-green-700" : "hover:bg-green-600"}`
+              }
+            >
+              <i className="fas fa-history min-w-[24px] text-white" />
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white">
+                Historique
+              </span>
+            </NavLink>
           </nav>
         </div>
 
@@ -105,7 +159,7 @@ export default function Layout() {
           {/* SearchBar */}
           <header className="p-4">
             <div className="flex justify-center">
-              <div className="relative w-[30%] min-w-[200px]">
+              <div className="relative w-[30%] min-w-[200px] shadow-sm">
                 <i className="fas fa-search absolute left-3 top-2 text-gray-300 text-sm z-10"></i>
                 <input
                   type="text"
@@ -116,21 +170,38 @@ export default function Layout() {
             </div>
           </header>
 
-           <main className="p-6 overflow-auto">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/profile" element={<Profile />} />
-            </Routes>
 
+         
+
+
+           <main className="p-6 overflow-auto">
+            <Outlet />
             {/* TASK LIST CONTAINER */}
-            <div className="container mx-auto w-[90%] mt-8">
-              {listtasks.length === 0 && (
-                <p className="text-center text-gray-600">No tasks yet</p>
-              )}
-              {listtasks.map((t, i) => (
-                <TaskCard key={i} task={t} setListTasks={setListTasks} />
-              ))}
-            </div>
+           {!isHistorique && !isProfile &&(
+            
+              <div className="container mx-auto w-[90%] mt-8">
+                 {/* top content */}
+                 <div className="container mt-5 mb-5">
+                     <div class="inline-flex items-center px-5 py-2.5 text-sm font-medium text-center text-gray-900  rounded-full bg-gray-200 ml-5 shadow-lg">
+                         Les taches D'aujourd'hui
+                     </div>
+                 </div>
+                {listtasks.length === 0 && (
+                 <div className="flex items-center justify-center mt-[150px]">
+                    <div className="text-center p-6 bg-gray-200 rounded-lg shadow-lg w-[20%]">
+                      <div className="text-4xl mb-4">
+                        <span role="img" aria-label="No tasks">😴</span>
+                      </div>
+                      <p className="text-gray-600">No tasks yet</p>
+                    </div>
+                  </div>
+
+                )}
+                {listtasks.map((t) => (
+                  <TaskCard key={t.id} task={t} setListTasks={setListTasks} setAllTasks={setAllTasks}/>
+                ))}
+              </div>
+            )}
           </main>
         </div>
       </div>

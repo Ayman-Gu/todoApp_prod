@@ -18,7 +18,7 @@ function createWindow() {
   if (process.env.NODE_ENV === 'development') {
     // En dev, charger le serveur
     mainWindow.loadURL('http://localhost:3000');
-    mainWindow.webContents.openDevTools(); // Ouvre la console en dev
+    mainWindow.webContents.openDevTools(); 
   } else {
     // En prod, charger le fichier buildé
     const indexPath = path.join(__dirname, '../../dist/index.html');
