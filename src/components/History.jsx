@@ -1,34 +1,40 @@
 import React, { useEffect, useState } from "react";
-import RightSidebar from "./RightSidebar"; // Make sure this path is correct
+import RightSidebar from "./RightSidebar";
 
-export default function History({ task,setListTasks,setAllTasks  }) {
+export default function History({ task, setListTasks, setAllTasks }) {
   const [completedTasks, setCompletedTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [showModal, setShowModal] = useState(false);
   const [description, setDescription] = useState("");
   const [currentTaskId, setCurrentTaskId] = useState(null);
+
+  // Track sidebar open and which task it relates to
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarTask, setSidebarTask] = useState(null);
 
-  useEffect(() => {
-    async function fetchTasks() {
-      try {
-        const res = await fetch("http://localhost:5000/api/tasks/getTask");
-        if (!res.ok) throw new Error("Failed to fetch tasks");
+  // Refactor fetching tasks into a reusable function
+  async function fetchTasks() {
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/tasks/getTask");
+      if (!res.ok) throw new Error("Failed to fetch tasks");
 
-        const data = await res.json();
-        const completed = data.filter((task) => task.completed === 1);
-        setCompletedTasks(completed);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
+      const data = await res.json();
+      const completed = data.filter((task) => task.completed === 1);
+      setCompletedTasks(completed);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
+  }
+
+  // Run once on mount
+  useEffect(() => {
     fetchTasks();
   }, []);
 
- 
   function formatDate(dateString) {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
@@ -39,7 +45,6 @@ export default function History({ task,setListTasks,setAllTasks  }) {
     return `${day}/${month}/${year} à ${hours}H${minutes}min`;
   }
 
-  
   const openDescriptionModal = (task) => {
     setCurrentTaskId(task.id);
     setDescription(task.description || "");
@@ -59,6 +64,7 @@ export default function History({ task,setListTasks,setAllTasks  }) {
 
       if (!response.ok) throw new Error("Failed to update description");
 
+      // Update local state for description change
       setCompletedTasks((prevTasks) =>
         prevTasks.map((t) =>
           t.id === currentTaskId ? { ...t, description } : t
@@ -73,17 +79,27 @@ export default function History({ task,setListTasks,setAllTasks  }) {
     }
   };
 
+  // Remove task from UI after delete
   const removeTaskFromUI = (id) => {
     setCompletedTasks((prev) => prev.filter((task) => task.id !== id));
+  };
+
+  // Update task in UI after update from sidebar
+  const updateTaskInUI = (updatedTask) => {
+    setCompletedTasks((prev) =>
+      prev.map((task) => (task.id === updatedTask.id ? updatedTask : task))
+    );
   };
 
   if (loading) return <p>Loading...</p>;
 
   if (completedTasks.length === 0) return <p>No completed tasks found.</p>;
-  
+
   return (
     <div className="p-4">
-      <h1 className="containertext-2xl font-bold mb-6 inline-flex items-center px-5 py-2.5 text-sm font-lg text-center text-gray-900  rounded-full bg-gray-200 shadow-lg">Historique des tâches complétées</h1>
+      <h1 className="containertext-2xl font-bold mb-6 inline-flex items-center px-5 py-2.5 text-sm font-lg text-center text-gray-900 rounded-full bg-gray-200 shadow-lg">
+        Historique des tâches complétées
+      </h1>
 
       {completedTasks.map((task) => (
         <div
@@ -122,19 +138,23 @@ export default function History({ task,setListTasks,setAllTasks  }) {
             ></i>
             <i
               className="fas fa-ellipsis text-gray-900 text-[25px] cursor-pointer ml-5"
-              onClick={() => setSidebarOpen(true)}
+              onClick={() => {
+                setSidebarTask(task); // Set the current task for the sidebar
+                setSidebarOpen(true);
+              }}
               title="Options"
             ></i>
           </div>
-
-          <RightSidebar
-            isOpen={sidebarOpen}
-            onDelete={removeTaskFromUI}
-            onClose={() => setSidebarOpen(false)}
-            task={task}
-          />
         </div>
       ))}
+
+      <RightSidebar
+        isOpen={sidebarOpen}
+        onDelete={removeTaskFromUI}
+        onClose={() => setSidebarOpen(false)}
+        task={sidebarTask}
+        onUpdate={updateTaskInUI}
+      />
 
       {/* Modal for description editing */}
       {showModal && (
