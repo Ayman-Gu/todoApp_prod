@@ -13,7 +13,6 @@ export default function History({ task, setListTasks, setAllTasks }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarTask, setSidebarTask] = useState(null);
 
-  // Refactor fetching tasks into a reusable function
   async function fetchTasks() {
     setLoading(true);
     try {
