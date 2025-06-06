@@ -32,7 +32,7 @@ cd backend
 node server.js
 ### Partie frontend
 En mode dev
-npm run dev
+- npm run dev
 En mode build
-npm run build
-npm run start
+-npm run build
+-npm run start
