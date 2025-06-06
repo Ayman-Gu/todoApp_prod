@@ -1,12 +1,12 @@
 # toDo-App
 
-## Technologies utilisées
+## 🛠️ Technologies utilisées
 
 - Node.js  
 - Electron  
 - React  
 
-## Fonctionnalités actuelles
+## 🚀 Fonctionnalités actuelles
 
 ### Gestion des tâches
 
@@ -14,9 +14,11 @@
 - Ajout d'une tâche avec une description
 - Modification ou suppression d'une tâche
 - Validation d'une tâche (déplacement de la tâche validée vers la page d'historique)
-- Sur la page historique : gestion des tâches + affichage de la date de validation
+- Sur la page historique : gestion des tâches et affichage de la date de validation
+  
+NB : j'ai utiliser les sockets io pour eviter l'actualisation du page pendant chaque action
 
-##  Base de données
+## 🗃️ Base de données
 
 Deux triggers sont définis dans la base de données :
 
@@ -27,12 +29,21 @@ Deux triggers sont définis dans la base de données :
 
 ## ⚙️ Exécution du projet
 
-### Partie Backend
+### Installation des dépendances (obligatoire avant toute exécution)
+
+```bash
+# Backend
 cd backend
-node server.js
-### Partie frontend
-En mode dev
+npm install
+
+# Frontend
+- npm install
+# En mode dev
 - npm run dev
-En mode build
--npm run build
--npm run start
+# En mode prod
+- npm run build
+- npm run start
+
+
+
+
