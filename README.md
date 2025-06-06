@@ -34,7 +34,7 @@ Deux triggers sont définis dans la base de données :
 
 # Backend
 cd backend
-npm install
+node server.js
 -----------------------
 # Frontend
 - npm install
