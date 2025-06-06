@@ -30,6 +30,7 @@ Deux triggers sont définis dans la base de données :
 ### Installation des dépendances
 
 ##  Exécution du projet
+```bash
 
 # Backend
 cd backend
