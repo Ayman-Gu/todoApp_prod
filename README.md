@@ -1,12 +1,12 @@
 # toDo-App
 
-## 🛠️ Technologies utilisées
+## Technologies utilisées
 
 - Node.js  
 - Electron  
 - React  
 
-## 🚀 Fonctionnalités actuelles
+## Fonctionnalités actuelles
 
 ### Gestion des tâches
 
@@ -18,7 +18,7 @@
   
 NB : j'ai utiliser les sockets io pour eviter l'actualisation du page pendant chaque action
 
-## 🗃️ Base de données
+## Base de données
 
 Deux triggers sont définis dans la base de données :
 
@@ -27,15 +27,14 @@ Deux triggers sont définis dans la base de données :
 
 📁 La base de données se trouve dans le dossier : `backend/DB_backup`
 
-## ⚙️ Exécution du projet
+### Installation des dépendances
 
-### Installation des dépendances (obligatoire avant toute exécution)
+##  Exécution du projet
 
-```bash
 # Backend
 cd backend
 npm install
-
+-----------------------
 # Frontend
 - npm install
 # En mode dev
@@ -43,7 +42,12 @@ npm install
 # En mode prod
 - npm run build
 - npm run start
+-----------------------
+1- tailwind version @3
+2- Routes pour react router
+3- react socket.io
+3- nodejs cors 
+4- express + mysql2
 
 
-
-
+⚠️⚠️Vérifier à tout moment si j'ai oublié quelque chose.
